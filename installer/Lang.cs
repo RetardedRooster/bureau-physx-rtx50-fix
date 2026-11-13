@@ -1,0 +1,173 @@
+// UI language for the installer. English is the default; Hungarian is selectable. The choice is stored in
+// %APPDATA%\BureauPhysXSetup\lang.txt (also read by the elevated helper process, so its errors match).
+// Keys are the Hungarian source strings (format strings with {0}.. placeholders); English texts are the values.
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+static class L {
+  public static readonly string[] Codes = { "en", "hu" };
+  public static readonly string[] Names = { "English", "Magyar" };
+  public static string Cur = "en";
+
+  static string File_() {
+    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BureauPhysXSetup", "lang.txt");
+  }
+
+  public static void Load() {
+    try { var c = File.ReadAllText(File_()).Trim(); if (Array.IndexOf(Codes, c) >= 0) Cur = c; } catch { }
+  }
+
+  public static void Save(string code) {
+    Cur = code;
+    try { Directory.CreateDirectory(Path.GetDirectoryName(File_())); File.WriteAllText(File_(), code); } catch { }
+  }
+
+  public static string T(string hu) {
+    if (Cur == "hu" || hu == null) return hu;
+    string en;
+    return En.TryGetValue(hu, out en) ? en : hu;
+  }
+
+  public static string F(string huFormat, params object[] args) { return string.Format(T(huFormat), args); }
+
+  static readonly Dictionary<string, string> En = new Dictionary<string, string> {
+    // --- window / PhysX tab
+    { "The Bureau – GPU PhysX és grafika", "The Bureau – GPU PhysX & Graphics" },
+    { "Játék mappája:", "Game folder:" },
+    { "Tallózás…", "Browse…" },
+    { "Nyelv:", "Language:" },
+    { "Grafika", "Graphics" },
+    { "GPU-gyorsított PhysX (füst, részecskék) RTX 50-es és más Kepler utáni NVIDIA kártyákon.\nA játék DLL-jeit nem módosítja: egy nvcuda.dll proxyt és az NVIDIA PTX-es GPU-kódját teszi mellé.",
+      "GPU-accelerated PhysX (smoke, particles) on RTX 50 series and other post-Kepler NVIDIA cards.\nThe game's DLLs are not modified: an nvcuda.dll proxy and NVIDIA's PTX GPU code are placed next to them." },
+    { "Részecskék mennyisége", "Particle amount" },
+    { "100% = a játék eredeti maximuma. 100% felett több részecske, mint amennyit a fejlesztők terveztek.",
+      "100% = the game's original maximum. Above 100%: more particles than the developers intended." },
+    { "Telepítés", "Install" },
+    { "Újratelepítés", "Reinstall" },
+    { "Csak a részecskeszám mentése", "Save particle amount only" },
+    { "Eltávolítás", "Uninstall" },
+    { "Követelmény: NVIDIA PhysX System Software (a GeForce-driverrel felkerül) és 32 bites CUDA-támogatás a driverben.\nAz XEngine.ini lehet írásvédett: a telepítő csak mentéskor veszi le a védelmet, utána visszateszi.",
+      "Requires: NVIDIA PhysX System Software (installed with the GeForce driver) and 32-bit CUDA support in the driver.\nXEngine.ini may stay read-only: the installer lifts the protection only while saving and restores it." },
+    { "Válaszd ki a The Bureau mappáját (amelyikben a Binaries mappa van)", "Select The Bureau's folder (the one that contains the Binaries folder)" },
+    { "Visszaállítsam az XEngine.ini-t is a telepítés előtti állapotra?\n(Ez a grafikai beállításokat is visszaállítja.)",
+      "Also restore XEngine.ini to its state before installation?\n(This also reverts the graphics settings.)" },
+    { "A játék nem található. Add meg a mappát.", "Game not found. Please select its folder." },
+    { "Hiányzik az NVIDIA PhysX-frissítés ({0}).", "The NVIDIA PhysX update is missing ({0})." },
+    { "GPU PhysX telepítve.", "GPU PhysX installed." },
+    { "GPU PhysX nincs telepítve.", "GPU PhysX not installed." },
+    { "Előbb lépj ki a játékból.", "Please exit the game first." },
+    { "Nincs írási jog. Indítsd a telepítőt rendszergazdaként.\n\n{0}", "No write permission. Run the installer as administrator.\n\n{0}" },
+    { "HIBA: {0}", "ERROR: {0}" },
+    // --- graphics tab
+    { "Kísérleti beállítások: nem garantált, hogy jól működnek, vagy hogy egyáltalán bármit is változtatnak a játékban.",
+      "Experimental settings: there is no guarantee that they work correctly or that they change anything in the game at all." },
+    { "be", "on" },
+    { "ki", "off" },
+    { "korlátlan", "unlimited" },
+    { "{0} Eredeti: {1}.", "{0} Original: {1}." },
+    { "Beolvasás", "Reload" },
+    { "Eredeti értékek", "Original values" },
+    { "Ajánlott maximum", "Recommended max" },
+    { "Grafika mentése", "Save graphics" },
+    { "FPS-korlát", "FPS limit" },
+    { "A driverprofilba kerül (a játék menüje nem írja felül).", "Stored in the driver profile (the game's menu cannot override it)." },
+    { "DX11-es renderelő a DX9 helyett.", "DX11 renderer instead of DX9." },
+    { "A bőr fényáteresztése (DX11).", "Light passing through skin (DX11)." },
+    { "Csempézett világítás (DX11).", "Tiled lighting (DX11)." },
+    { "Anizotróp szűrés", "Anisotropic filtering" },
+    { "Ferde felületek textúraélessége.", "Texture sharpness at oblique angles." },
+    { "FXAA minősége", "FXAA quality" },
+    { "Utófeldolgozásos élsimítás.", "Post-process anti-aliasing." },
+    { "Másik utófeldolgozásos élsimítás.", "Alternative post-process anti-aliasing." },
+    { "Temporális AA", "Temporal AA" },
+    { "Korai UE3-as TAA, szellemképes.", "Early UE3 TAA, causes ghosting." },
+    { "Árnyékélek simítása", "Shadow edge smoothing" },
+    { "Mintaszám az árnyékok szélén.", "Samples at shadow edges." },
+    { "Fő árnyékok felbontása", "Main shadow resolution" },
+    { "A fő fényforrás árnyéktérképe.", "Shadow map of the main light." },
+    { "Árnyékot vető fények", "Shadow-casting lights" },
+    { "Egyszerre árnyékot vető fények.", "Lights casting shadows at once." },
+    { "Fegyver önárnyéka", "Weapon self-shadowing" },
+    { "Az előtér saját árnyéka.", "Foreground self-shadowing." },
+    { "Pontos G-buffer", "High-precision G-buffer" },
+    { "Kevesebb sávosodás a fényekben.", "Less banding in lighting." },
+    { "Max. minőségű mód", "Max quality mode" },
+    { "A motor saját módja (kísérleti).", "The engine's own mode (experimental)." },
+    { "Textúra-keret (MB)", "Texture pool (MB)" },
+    { "Textúrák videomemória-kerete.", "Video memory budget for textures." },
+    { "Trilineáris szűrés", "Trilinear filtering" },
+    { "Sima átmenet a mip-szintek között.", "Smooth transition between mip levels." },
+    // --- graphics save log
+    { "21:9: a monitor nem szélesebb 16:9-nél, a javításnak nincs látható hatása.", "21:9: the monitor is not wider than 16:9, the fix has no visible effect." },
+    { "Az XEngine.ini még nem létezik – indítsd el egyszer a játékot.", "XEngine.ini does not exist yet – start the game once." },
+    { "Grafika: nincs változás.", "Graphics: no changes." },
+    { "Grafika: {0}", "Graphics: {0}" },
+    { "(Az XEngine.ini írásvédett maradt.)", "(XEngine.ini stayed read-only.)" },
+    // --- install / uninstall
+    { "A TheBureau.exe nem található itt: {0}", "TheBureau.exe not found in: {0}" },
+    { "Nem található az NVIDIA PhysX-frissítés:\n{0}\n\nTelepítsd az NVIDIA PhysX System Software-t (a GeForce-driverrel együtt is felkerül).",
+      "NVIDIA PhysX update not found:\n{0}\n\nInstall the NVIDIA PhysX System Software (it is also installed with the GeForce driver)." },
+    { "Nem található a 32 bites NVIDIA CUDA-driver (SysWOW64\\nvcuda.dll).", "The 32-bit NVIDIA CUDA driver was not found (SysWOW64\\nvcuda.dll)." },
+    { "APEX_{0}CHECKED_x86.dll verziója {1}, nem az eredeti 1.2.3.0.\nÁllítsd helyre a játékfájlokat (Steam: Fájlok sértetlenségének ellenőrzése).",
+      "APEX_{0}CHECKED_x86.dll is version {1}, not the original 1.2.3.0.\nRestore the game files (Steam: Verify integrity of game files)." },
+    { "Proxy (nvcuda.dll) másolása…", "Copying proxy (nvcuda.dll)…" },
+    { "GPU-modulok párosítása az NVIDIA PTX-es változataival…", "Pairing GPU modules with NVIDIA's PTX versions…" },
+    { "  ! nincs sm_30 kód egy modulban: {0}", "  ! no sm_30 code in a module: {0}" },
+    { "  ! {0}: nincs párja", "  ! {0}: no counterpart" },
+    { "  ! {0}: eltérő felület ({1})", "  ! {0}: different interface ({1})" },
+    { "  {0}: {1} modul OK", "  {0}: {1} modules OK" },
+    { "  {0}: {1} modul OK, {2} hiba", "  {0}: {1} modules OK, {2} errors" },
+    { "Cseremodulok: {0} / {1}", "Replacement modules: {0} / {1}" },
+    { "Nem minden GPU-modul párosítható ({0}/{1}, hibák: {2}).", "Not all GPU modules could be paired ({0}/{1}, errors: {2})." },
+    { "Kész. Indítsd a játékot; a PhysX legyen bekapcsolva a menüben.", "Done. Start the game; make sure PhysX is enabled in its menu." },
+    { "{0}: a driverprofil nem olvasható ({1})", "{0}: the driver profile cannot be read ({1})" },
+    { "{0}: 32 bites GPU PhysX a driverprofilban BE", "{0}: 32-bit GPU PhysX in the driver profile: ON" },
+    { "{0}: 32 bites GPU PhysX a driverprofilban KI", "{0}: 32-bit GPU PhysX in the driver profile: OFF" },
+    { "Nem RTX 50-es kártya: a driverprofil-kapcsoló nem kell.", "Not an RTX 50 card: the driver profile switch is not needed." },
+    { "{0}: a 32 bites PhysX-kapcsoló már be van kapcsolva a driverprofilban.", "{0}: the 32-bit PhysX switch is already on in the driver profile." },
+    { "{0}: a 32 bites PhysX-kapcsoló bekapcsolása a driverprofilban (rendszergazdai jóváhagyás kell)…",
+      "{0}: enabling the 32-bit PhysX switch in the driver profile (administrator approval needed)…" },
+    { "Enélkül RTX 50-en a PhysX a CPU-n fut.", "Without it, PhysX runs on the CPU on RTX 50 cards." },
+    { "A driverprofil-kapcsoló írása után sem olvasható vissza 1-ként.", "The driver profile switch does not read back as 1 after writing it." },
+    { "Driverprofil: 32 bites GPU PhysX bekapcsolva (thebureau.exe).", "Driver profile: 32-bit GPU PhysX enabled (thebureau.exe)." },
+    { "A rendszergazdai jóváhagyás elmaradt, a driverprofil nem változott.\n{0}", "Administrator approval was declined; the driver profile was not changed.\n{0}" },
+    { "A driverprofil írása nem sikerült: {0}", "Writing the driver profile failed: {0}" },
+    { "kód {0}", "code {0}" },
+    { "Driverprofil: FPS-korlát törlése (rendszergazdai jóváhagyás kell)…", "Driver profile: removing the FPS limit (administrator approval needed)…" },
+    { "Driverprofil: FPS-korlát {0} fps (rendszergazdai jóváhagyás kell)…", "Driver profile: FPS limit {0} fps (administrator approval needed)…" },
+    { "Az FPS-korlát nem változott.", "The FPS limit was not changed." },
+    { "Driverprofil: FPS-korlát = nincs.", "Driver profile: FPS limit = none." },
+    { "Driverprofil: FPS-korlát = {0} fps.", "Driver profile: FPS limit = {0} fps." },
+    { "Az XEngine.ini még nem létezik (indítsd el egyszer a játékot), a részecskebeállítás kimaradt.",
+      "XEngine.ini does not exist yet (start the game once); the particle setting was skipped." },
+    { "XEngine.ini: ParticlePercentage={0}, APEX-keret korlátlan, PhysX GPU-heap 256 MB.", "XEngine.ini: ParticlePercentage={0}, APEX budget unlimited, PhysX GPU heap 256 MB." },
+    { " (írásvédett marad)", " (stays read-only)" },
+    { "Proxy és cseremodulok eltávolítva. (A driverprofil 32 bites PhysX-kapcsolója maradt, az nem árt.)",
+      "Proxy and replacement modules removed. (The driver profile's 32-bit PhysX switch was kept; it does no harm.)" },
+    { "XEngine.ini visszaállítva (az írásvédelem levéve).", "XEngine.ini restored (read-only flag removed)." },
+    // --- 21:9
+    { "Ultraszéles (pl. 21:9) monitorhoz: a játék a monitor natív felbontásán fut, a 3D-s kép kitölti a képernyőt, a menük és a HUD pedig egy középső 16:9-es területre kerülnek, így nem vágódnak le. A videók 16:9-ben maradnak.",
+      "For ultrawide (e.g. 21:9) monitors: the game runs at the monitor's native resolution, the 3D view fills the screen, and menus and HUD are placed in a centered 16:9 area so they are no longer cut off. Movies stay 16:9." },
+    { "A menüjavítás a Widescreen Fixer „The Bureau XCOM” pluginjának (Helifax) logikáját követi; a TheBureau.exe-t módosítja, mentéssel, és kikapcsolva visszaállítja.",
+      "The menu fix follows the logic of the Widescreen Fixer \"The Bureau XCOM\" plugin (Helifax); it patches TheBureau.exe with a backup and restores it when switched off." },
+    { "Monitor: {0}×{1}", "Monitor: {0}×{1}" },
+    { "Jelenlegi állapot: {0}", "Current state: {0}" },
+    { "21:9 / ultraszéles javítás bekapcsolva", "21:9 / ultrawide fix enabled" },
+    { "Alkalmaz", "Apply" },
+    { "21:9: játékfelbontás {0}×{1}.", "21:9: game resolution {0}×{1}." },
+    { "A cím (0x{0}) nincs a TheBureau.exe-ben.", "Address 0x{0} is not inside TheBureau.exe." },
+    { "nincs TheBureau.exe", "TheBureau.exe not found" },
+    { "ismeretlen exe-verzió ({0}), a javítás csak a {1}-hoz készült", "unknown exe version ({0}); the fix is only for {1}" },
+    { "be ({0} széles, {1} eltolás)", "on ({0} wide, {1} offset)" },
+    { "az exe ezen a helyen ismeretlen módon módosítva", "the exe is modified in an unknown way at this location" },
+    { "A 21:9-es javítás nem alkalmazható: {0}", "The 21:9 fix cannot be applied: {0}" },
+    { "21:9: a menük és a HUD egy középső {0}×{1}-es területre kerülnek (eltolás {2}).", "21:9: menus and HUD are placed in a centered {0}×{1} area (offset {2})." },
+    { "21:9: a TheBureau.exe visszaállítva az eredetire.", "21:9: TheBureau.exe restored to the original." },
+    // --- NVAPI
+    { "NVAPI-függvény nem érhető el (0x{0})", "NVAPI function not available (0x{0})" },
+    { "NVAPI {0} hiba: {1}", "NVAPI {0} error: {1}" },
+    { "Az NVIDIA driver (nvapi) nem található.", "NVIDIA driver (nvapi) not found." },
+    { "nvapi_QueryInterface nem található.", "nvapi_QueryInterface not found." },
+  };
+}
