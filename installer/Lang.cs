@@ -149,8 +149,8 @@ static class L {
     // --- 21:9
     { "Ultraszéles (pl. 21:9) monitorhoz: a játék a monitor natív felbontásán fut, a 3D-s kép kitölti a képernyőt, a menük és a HUD pedig egy középső 16:9-es területre kerülnek, így nem vágódnak le. A videók 16:9-ben maradnak.",
       "For ultrawide (e.g. 21:9) monitors: the game runs at the monitor's native resolution, the 3D view fills the screen, and menus and HUD are placed in a centered 16:9 area so they are no longer cut off. Movies stay 16:9." },
-    { "A menüjavítás a Widescreen Fixer „The Bureau XCOM” pluginjának (Helifax) logikáját követi; a TheBureau.exe-t módosítja, mentéssel, és kikapcsolva visszaállítja.",
-      "The menu fix follows the logic of the Widescreen Fixer \"The Bureau XCOM\" plugin (Helifax); it patches TheBureau.exe with a backup and restores it when switched off." },
+    { "A menüjavítás módszerét Helifax Widescreen Fixer-pluginja („The Bureau XCOM”) mutatta meg; a kód önálló, saját megvalósítás. A TheBureau.exe-t módosítja, mentéssel, és kikapcsolva visszaállítja.",
+      "The menu fix uses the approach shown by Helifax's Widescreen Fixer plugin (\"The Bureau XCOM\"); the code is an independent reimplementation. It patches TheBureau.exe with a backup and restores it when switched off." },
     { "Monitor: {0}×{1}", "Monitor: {0}×{1}" },
     { "Jelenlegi állapot: {0}", "Current state: {0}" },
     { "21:9 / ultraszéles javítás bekapcsolva", "21:9 / ultrawide fix enabled" },

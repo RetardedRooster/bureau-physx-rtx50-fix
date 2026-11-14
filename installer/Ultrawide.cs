@@ -1,5 +1,6 @@
-// 21:9 (and any wider-than-16:9) fix for The Bureau, ported from the Widescreen Fixer plugin
-// "Plugin.The Bureau XCOM.dll" (Helifax, 2013, Steam exe v0.1.0.15143): every Scaleform (menu/HUD) viewport is
+// 21:9 (and any wider-than-16:9) fix for The Bureau. Approach from Helifax's Widescreen Fixer plugin
+// "Plugin.The Bureau XCOM.dll" (2013, Steam exe v0.1.0.15143), studied without running it and independently
+// reimplemented here (no plugin code or files are used): every Scaleform (menu/HUD) viewport is
 // narrowed to a centered 16:9 area, so menus are no longer cut at the top/bottom. Gameplay (Hor+) and the
 // pre-rendered movies already work at 21:9 and are not touched.
 //

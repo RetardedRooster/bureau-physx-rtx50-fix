@@ -581,13 +581,13 @@ class SetupForm : Form {
                  "a menük és a HUD pedig egy középső 16:9-es területre kerülnek, így nem vágódnak le. A videók 16:9-ben maradnak."),
       Location = new Point(10, 10), Size = new Size(564, 64) };
     var uwSource = new Label {
-      Text = L.T("A menüjavítás a Widescreen Fixer „The Bureau XCOM” pluginjának (Helifax) logikáját követi; a TheBureau.exe-t módosítja, mentéssel, és kikapcsolva visszaállítja."),
-      Location = new Point(10, 78), Size = new Size(564, 36), ForeColor = SystemColors.GrayText };
-    uwMonitor.Location = new Point(10, 124); uwMonitor.Size = new Size(564, 20);
+      Text = L.T("A menüjavítás módszerét Helifax Widescreen Fixer-pluginja („The Bureau XCOM”) mutatta meg; a kód önálló, saját megvalósítás. A TheBureau.exe-t módosítja, mentéssel, és kikapcsolva visszaállítja."),
+      Location = new Point(10, 78), Size = new Size(564, 52), ForeColor = SystemColors.GrayText };
+    uwMonitor.Location = new Point(10, 140); uwMonitor.Size = new Size(564, 20);
     uwMonitor.Text = L.F("Monitor: {0}×{1}", scrB.Width, scrB.Height);
-    uwState.Location = new Point(10, 148); uwState.Size = new Size(564, 36);
-    uwCheck.Text = L.T("21:9 / ultraszéles javítás bekapcsolva"); uwCheck.Location = new Point(10, 192); uwCheck.Size = new Size(400, 24);
-    uwApply.Text = L.T("Alkalmaz"); uwApply.Location = new Point(10, 226); uwApply.Size = new Size(170, 32);
+    uwState.Location = new Point(10, 164); uwState.Size = new Size(564, 36);
+    uwCheck.Text = L.T("21:9 / ultraszéles javítás bekapcsolva"); uwCheck.Location = new Point(10, 208); uwCheck.Size = new Size(400, 24);
+    uwApply.Text = L.T("Alkalmaz"); uwApply.Location = new Point(10, 242); uwApply.Size = new Size(170, 32);
     tabUw.Controls.AddRange(new Control[] { uwIntro, uwSource, uwMonitor, uwState, uwCheck, uwApply });
     uwApply.Click += (s, e) => { Run(() => Setup.ApplyUltrawide(Game, uwCheck.Checked, Log)); LoadUltrawide(); };
 
