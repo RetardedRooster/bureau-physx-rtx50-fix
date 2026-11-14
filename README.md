@@ -30,7 +30,7 @@ With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or partic
 
 Extras:
 - **21:9 tab** – native resolution; menus and HUD in a centered 16:9 area (the main menu is otherwise cut off at the
-  top and bottom). Patches `TheBureau.exe` (Scaleform viewport hook, original bytes verified, backup kept, fully
+  top and bottom); the cutscene videos keep the full screen. Patches `TheBureau.exe` (Scaleform viewport hook, original bytes verified, backup kept, fully
   restored when switched off). The approach comes from **Helifax's Widescreen Fixer plugin** for this game; it was
   studied (not run) and independently reimplemented here – no plugin code or files are included.
 - **FPS limit** via the driver profile's frame rate limiter (the in-game option overrides the ini otherwise).
