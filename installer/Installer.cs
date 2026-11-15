@@ -453,7 +453,8 @@ class GfxSetting {
 
 static class Gfx {
   // Special keys handled in Read/Write: FPS (MaxSmoothedFrameRate + MaxSmoothedFPS + bSmoothFrameRate),
-  // TRILINEAR (MipFilter of the texture groups in [SystemSettings]).
+  // TRILINEAR (MipFilter of the texture groups in [SystemSettings]),
+  // DEBRIS (ApexDestructionMaxChunkIslandCount + ApexDestructionMaxShapeCount; the game ships 2500 / 0 = unlimited).
   public static readonly GfxSetting[] All = {
     new GfxSetting("Engine.Engine", "FPS", "FPS-korlát", "A driverprofilba kerül (a játék menüje nem írja felül).",
                    new[] { "30", "60", "90", "120", "144", "165", "175", "240", "0" }, "122", "120"),
@@ -472,6 +473,8 @@ static class Gfx {
     new GfxSetting("SystemSettings", "bUseMaxQualityMode", "Max. minőségű mód", "A motor saját módja (kísérleti).", null, "False", "False"),
     new GfxSetting("TextureStreaming", "PoolSize", "Textúra-keret (MB)", "Textúrák videomemória-kerete.", new[] { "200", "512", "1024", "2048", "3072" }, "200", "200"),
     new GfxSetting("SystemSettings", "TRILINEAR", "Trilineáris szűrés", "Sima átmenet a mip-szintek között.", null, "False", "False"),
+    new GfxSetting("SystemSettings", "DEBRIS", "Törmelék-korlát", "Egyszerre szimulált roncsdarabok; kevesebb = kisebb CPU-terhelés harcban.",
+                   new[] { "2500", "1500", "800", "500" }, "2500", "1500"),
   };
 
   static bool ParseBool(string v) { return v != null && v.Trim().Equals("true", StringComparison.OrdinalIgnoreCase); }
@@ -488,6 +491,10 @@ static class Gfx {
     if (s.Key == "TRILINEAR") {
       var w = Setup.GetValue(t, "SystemSettings", "TEXTUREGROUP_World");
       return w != null && w.IndexOf("MipFilter=Linear", StringComparison.OrdinalIgnoreCase) >= 0 ? "True" : "False";
+    }
+    if (s.Key == "DEBRIS") {
+      var d = Setup.GetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount");
+      return d == null ? s.Original : d.Trim().Split('.')[0];
     }
     var r = Setup.GetValue(t, s.Section, s.Key);
     if (r == null) return s.Original;
@@ -512,6 +519,10 @@ static class Gfx {
       body = value == "True" ? Regex.Replace(body, TexGroups + "Point", "${1}MipFilter=Linear")
                              : Regex.Replace(body, TexGroups + "Linear", "${1}MipFilter=Point");
       return t.Substring(0, a) + body + t.Substring(b);
+    }
+    if (s.Key == "DEBRIS") {
+      t = Setup.SetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount", value);
+      return Setup.SetValue(t, "SystemSettings", "ApexDestructionMaxShapeCount", value == s.Original ? "0" : value);
     }
     return Setup.SetValue(t, s.Section, s.Key, value);
   }

@@ -95,6 +95,8 @@ static class L {
     { "Max. minőségű mód", "Max quality mode" },
     { "A motor saját módja (kísérleti).", "The engine's own mode (experimental)." },
     { "Textúra-keret (MB)", "Texture pool (MB)" },
+    { "Törmelék-korlát", "Debris limit" },
+    { "Egyszerre szimulált roncsdarabok; kevesebb = kisebb CPU-terhelés harcban.", "Destruction pieces simulated at once; fewer = less CPU load in fights." },
     { "Textúrák videomemória-kerete.", "Video memory budget for textures." },
     { "Trilineáris szűrés", "Trilinear filtering" },
     { "Sima átmenet a mip-szintek között.", "Smooth transition between mip levels." },

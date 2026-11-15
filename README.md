@@ -41,6 +41,9 @@ Extras:
   studied (not run) and independently reimplemented here – no plugin code or files are included.
 - **FPS limit** via the driver profile's frame rate limiter (the in-game option overrides the ini otherwise).
 - **Graphics tab (experimental)** – DX11, anisotropy, FXAA, shadows, … No guarantee these change anything.
+- **Debris limit** (Graphics tab) – caps the APEX destruction pieces simulated at once (the game ships unlimited).
+  Large fights with lots of debris on the ground are CPU-bound (the 32-bit engine's main threads hit 100 % while the GPU
+  idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops. 1500 is a good start, 800/500 for more.
 - English / Hungarian UI.
 
 ## Usage
