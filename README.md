@@ -32,7 +32,7 @@ With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or partic
   (kernel names, parameter offsets/sizes, constant bank sizes, symbols) – 26/26 match. No NVIDIA file is
   redistributed. The game's own DLLs are not modified (NVIDIA's 1.2.3.1 DLLs are not ABI-compatible with the game).
 - On RTX 50 cards only: sets the 32-bit PhysX switch on `thebureau.exe`'s driver profile via NVAPI (UAC prompt).
-- Particle amount slider (50–200 %), PhysX GPU heap / APEX budget in `XEngine.ini`.
+- Particle amount slider (50–200 %), debris limits, PhysX GPU heap / APEX budget in `XEngine.ini`.
 
 Extras:
 - **21:9 tab** – native resolution; menus and HUD in a centered 16:9 area (the main menu is otherwise cut off at the
@@ -41,9 +41,10 @@ Extras:
   studied (not run) and independently reimplemented here – no plugin code or files are included.
 - **FPS limit** via the driver profile's frame rate limiter (the in-game option overrides the ini otherwise).
 - **Graphics tab (experimental)** – DX11, anisotropy, FXAA, shadows, … No guarantee these change anything.
-- **Debris limit** (Graphics tab) – caps the APEX destruction pieces simulated at once (the game ships unlimited).
+- **Debris limit** (PhysX tab: chunk islands and pieces) – caps the APEX destruction debris simulated at once (the game
+  ships 2500 / unlimited).
   Large fights with lots of debris on the ground are CPU-bound (the 32-bit engine's main threads hit 100 % while the GPU
-  idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops. 1500 is a good start, 800/500 for more.
+  idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops. 1500 / 1500 is a good start.
 - English / Hungarian UI.
 
 ## Usage

@@ -219,7 +219,7 @@ static class Setup {
     return File.Exists(Path.Combine(bin, "nvcuda.dll")) && Directory.Exists(Path.Combine(bin, "cuda_ptx"));
   }
 
-  public static void Install(string game, int particles, Action<string> log) {
+  public static void Install(string game, int particles, int debrisIslands, int debrisShapes, Action<string> log) {
     var bin = BinDir(game);
     if (!File.Exists(Path.Combine(bin, "TheBureau.exe"))) throw new Exception(L.F("A TheBureau.exe nem található itt: {0}", bin));
     if (!Directory.Exists(UpdateDir))
@@ -253,7 +253,7 @@ static class Setup {
     if (bad > 0 || total != ExpectedModules) throw new Exception(L.F("Nem minden GPU-modul párosítható ({0}/{1}, hibák: {2}).", total, ExpectedModules, bad));
 
     EnsureDriverProfile(log);
-    SetParticles(game, particles, log);
+    SetParticles(game, particles, debrisIslands, debrisShapes, log);
     log(L.T("Kész. Indítsd a játékot; a PhysX legyen bekapcsolva a menüben."));
   }
 
@@ -397,9 +397,25 @@ static class Setup {
     return t.Substring(0, s) + body + t.Substring(e);
   }
 
-  public static void SetParticles(string game, int percent, Action<string> log) {
+  // APEX destruction debris: the game ships 2500 chunk islands / 0 (= unlimited) shapes. The debris is simulated on the
+  // CPU, so big fights with lots of it on the ground are CPU-bound; lower limits reduce the frame drops.
+  public const int DebrisIslandsOrig = 2500, DebrisShapesOrig = 0;
+
+  public static void ReadDebris(string game, out int islands, out int shapes) {
+    islands = DebrisIslandsOrig; shapes = DebrisShapesOrig;
+    try {
+      var t = File.ReadAllText(IniPath(game), Encoding.Default);
+      int v;
+      if (int.TryParse((GetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount") ?? "").Split('.')[0].Trim(), out v)) islands = v;
+      if (int.TryParse((GetValue(t, "SystemSettings", "ApexDestructionMaxShapeCount") ?? "").Split('.')[0].Trim(), out v)) shapes = v;
+    } catch { }
+  }
+
+  public static void SetParticles(string game, int percent, int debrisIslands, int debrisShapes, Action<string> log) {
     bool ro;
     bool ok = EditIni(game, t => {
+      t = SetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount", debrisIslands.ToString());
+      t = SetValue(t, "SystemSettings", "ApexDestructionMaxShapeCount", debrisShapes.ToString());
       t = Regex.Replace(t, @"(\[Engine\.PhysicsLODVerticalEmitter\]\r?\nParticlePercentage=)\d+", "${1}" + percent);
       t = Regex.Replace(t, @"(?m)^ApexLODResourceBudget=.*$", "ApexLODResourceBudget=1000000020040877300000.000000");
       t = Regex.Replace(t, @"(?m)^PhysXGpuHeapSize=\d+", "PhysXGpuHeapSize=256");
@@ -408,6 +424,7 @@ static class Setup {
     }, out ro);
     if (!ok) { log(L.T("Az XEngine.ini még nem létezik (indítsd el egyszer a játékot), a részecskebeállítás kimaradt.")); return; }
     log(L.F("XEngine.ini: ParticlePercentage={0}, APEX-keret korlátlan, PhysX GPU-heap 256 MB.", percent) + (ro ? L.T(" (írásvédett marad)") : ""));
+    log(L.F("XEngine.ini: törmelék-korlát {0} darabcsoport, {1} darab.", debrisIslands, debrisShapes == 0 ? L.T("korlátlan") : debrisShapes.ToString()));
   }
 
   public static int ReadParticles(string game) {
@@ -453,8 +470,7 @@ class GfxSetting {
 
 static class Gfx {
   // Special keys handled in Read/Write: FPS (MaxSmoothedFrameRate + MaxSmoothedFPS + bSmoothFrameRate),
-  // TRILINEAR (MipFilter of the texture groups in [SystemSettings]),
-  // DEBRIS (ApexDestructionMaxChunkIslandCount + ApexDestructionMaxShapeCount; the game ships 2500 / 0 = unlimited).
+  // TRILINEAR (MipFilter of the texture groups in [SystemSettings]).
   public static readonly GfxSetting[] All = {
     new GfxSetting("Engine.Engine", "FPS", "FPS-korlát", "A driverprofilba kerül (a játék menüje nem írja felül).",
                    new[] { "30", "60", "90", "120", "144", "165", "175", "240", "0" }, "122", "120"),
@@ -473,8 +489,6 @@ static class Gfx {
     new GfxSetting("SystemSettings", "bUseMaxQualityMode", "Max. minőségű mód", "A motor saját módja (kísérleti).", null, "False", "False"),
     new GfxSetting("TextureStreaming", "PoolSize", "Textúra-keret (MB)", "Textúrák videomemória-kerete.", new[] { "200", "512", "1024", "2048", "3072" }, "200", "200"),
     new GfxSetting("SystemSettings", "TRILINEAR", "Trilineáris szűrés", "Sima átmenet a mip-szintek között.", null, "False", "False"),
-    new GfxSetting("SystemSettings", "DEBRIS", "Törmelék-korlát", "Egyszerre szimulált roncsdarabok; kevesebb = kisebb CPU-terhelés harcban.",
-                   new[] { "2500", "1500", "800", "500" }, "2500", "1500"),
   };
 
   static bool ParseBool(string v) { return v != null && v.Trim().Equals("true", StringComparison.OrdinalIgnoreCase); }
@@ -491,10 +505,6 @@ static class Gfx {
     if (s.Key == "TRILINEAR") {
       var w = Setup.GetValue(t, "SystemSettings", "TEXTUREGROUP_World");
       return w != null && w.IndexOf("MipFilter=Linear", StringComparison.OrdinalIgnoreCase) >= 0 ? "True" : "False";
-    }
-    if (s.Key == "DEBRIS") {
-      var d = Setup.GetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount");
-      return d == null ? s.Original : d.Trim().Split('.')[0];
     }
     var r = Setup.GetValue(t, s.Section, s.Key);
     if (r == null) return s.Original;
@@ -520,10 +530,6 @@ static class Gfx {
                              : Regex.Replace(body, TexGroups + "Linear", "${1}MipFilter=Point");
       return t.Substring(0, a) + body + t.Substring(b);
     }
-    if (s.Key == "DEBRIS") {
-      t = Setup.SetValue(t, "SystemSettings", "ApexDestructionMaxChunkIslandCount", value);
-      return Setup.SetValue(t, "SystemSettings", "ApexDestructionMaxShapeCount", value == s.Original ? "0" : value);
-    }
     return Setup.SetValue(t, s.Section, s.Key, value);
   }
 }
@@ -533,6 +539,7 @@ class SetupForm : Form {
   TextBox pathBox = new TextBox();
   Label status = new Label();
   TrackBar slider = new TrackBar();
+  NumericUpDown debrisIslands = new NumericUpDown(), debrisShapes = new NumericUpDown();
   Label sliderValue = new Label();
   Button install = new Button(), apply = new Button(), uninstall = new Button(), browse = new Button();
   Button gfxSave = new Button(), gfxOriginal = new Button(), gfxMax = new Button(), gfxReload = new Button();
@@ -615,14 +622,24 @@ class SetupForm : Form {
     var hint = new Label { Text = L.T("100% = a játék eredeti maximuma. 100% felett több részecske, mint amennyit a fejlesztők terveztek."),
                            Location = new Point(10, 66), Size = new Size(545, 36), ForeColor = SystemColors.GrayText };
     group.Controls.AddRange(new Control[] { slider, sliderValue, hint });
-    install.Text = L.T("Telepítés"); install.Location = new Point(10, 184); install.Size = new Size(170, 32);
-    apply.Text = L.T("Csak a részecskeszám mentése"); apply.Location = new Point(190, 184); apply.Size = new Size(210, 32);
-    uninstall.Text = L.T("Eltávolítás"); uninstall.Location = new Point(410, 184); uninstall.Size = new Size(160, 32);
+    var dgroup = new GroupBox { Text = L.T("Törmelék (roncsolás)"), Location = new Point(10, 176), Size = new Size(560, 100) };
+    var dl1 = new Label { Text = L.T("Darabcsoportok:"), Location = new Point(10, 24), Size = new Size(130, 20) };
+    debrisIslands.Minimum = 100; debrisIslands.Maximum = 10000; debrisIslands.Increment = 100;
+    debrisIslands.Location = new Point(142, 21); debrisIslands.Size = new Size(80, 23);
+    var dl2 = new Label { Text = L.T("Darabok (0 = korlátlan):"), Location = new Point(244, 24), Size = new Size(170, 20) };
+    debrisShapes.Minimum = 0; debrisShapes.Maximum = 20000; debrisShapes.Increment = 100;
+    debrisShapes.Location = new Point(416, 21); debrisShapes.Size = new Size(80, 23);
+    var dhint = new Label { Text = L.T("Egyszerre szimulált roncsdarabok. A törmeléket a CPU számolja: sok darabnál harcban leesik az fps. Gyári: 2500 / 0 (korlátlan); ajánlott 1500 / 1500, kevesebb = simább."),
+                            Location = new Point(10, 50), Size = new Size(545, 46), ForeColor = SystemColors.GrayText };
+    dgroup.Controls.AddRange(new Control[] { dl1, debrisIslands, dl2, debrisShapes, dhint });
+    install.Text = L.T("Telepítés"); install.Location = new Point(10, 284); install.Size = new Size(170, 32);
+    apply.Text = L.T("Csak a beállítások mentése"); apply.Location = new Point(190, 284); apply.Size = new Size(210, 32);
+    uninstall.Text = L.T("Eltávolítás"); uninstall.Location = new Point(410, 284); uninstall.Size = new Size(160, 32);
     var note = new Label {
       Text = L.T("Követelmény: NVIDIA PhysX System Software (a GeForce-driverrel felkerül) és 32 bites CUDA-támogatás a driverben.\n" +
                  "Az XEngine.ini lehet írásvédett: a telepítő csak mentéskor veszi le a védelmet, utána visszateszi."),
-      Location = new Point(10, 228), Size = new Size(564, 80), ForeColor = SystemColors.GrayText };
-    tabPhysx.Controls.AddRange(new Control[] { intro, group, install, apply, uninstall, note });
+      Location = new Point(10, 324), Size = new Size(564, 60), ForeColor = SystemColors.GrayText };
+    tabPhysx.Controls.AddRange(new Control[] { intro, group, dgroup, install, apply, uninstall, note });
 
     // --- Graphics tab: one row per setting
     var experimental = new Label {
@@ -662,8 +679,8 @@ class SetupForm : Form {
         if (d.ShowDialog(this) == DialogResult.OK) { pathBox.Text = d.SelectedPath; Refresh_(); LoadGfx(); }
     };
     pathBox.Leave += (s, e) => { Refresh_(); LoadGfx(); };
-    install.Click += (s, e) => Run(() => Setup.Install(Game, slider.Value, Log));
-    apply.Click += (s, e) => Run(() => Setup.SetParticles(Game, slider.Value, Log));
+    install.Click += (s, e) => Run(() => Setup.Install(Game, slider.Value, (int)debrisIslands.Value, (int)debrisShapes.Value, Log));
+    apply.Click += (s, e) => Run(() => Setup.SetParticles(Game, slider.Value, (int)debrisIslands.Value, (int)debrisShapes.Value, Log));
     uninstall.Click += (s, e) => {
       var r = MessageBox.Show(this, L.T("Visszaállítsam az XEngine.ini-t is a telepítés előtti állapotra?\n(Ez a grafikai beállításokat is visszaállítja.)"),
                               L.T("Eltávolítás"), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
@@ -679,8 +696,16 @@ class SetupForm : Form {
     pathBox.Text = Setup.FindGame() ?? "";
     Refresh_();
     if (Game != null) slider.Value = Math.Max(50, Math.Min(200, Setup.ReadParticles(Game)));
+    LoadDebris();
     sliderValue.Text = slider.Value + "%";
     LoadGfx();
+  }
+
+  void LoadDebris() {
+    int i = Setup.DebrisIslandsOrig, sh = Setup.DebrisShapesOrig;
+    if (Game != null) Setup.ReadDebris(Game, out i, out sh);
+    debrisIslands.Value = Math.Max(debrisIslands.Minimum, Math.Min(debrisIslands.Maximum, i));
+    debrisShapes.Value = Math.Max(debrisShapes.Minimum, Math.Min(debrisShapes.Maximum, sh));
   }
 
   static string OptionText(GfxSetting s, string o) { return s.Key == "FPS" && o == "0" ? L.T("korlátlan") : o; }
