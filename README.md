@@ -7,14 +7,20 @@
 > keep backups, and use it at your own risk.
 
 One-click installer (`BureauPhysXSetup.exe`, see Releases) that makes **GPU-accelerated PhysX** work again in
-*The Bureau: XCOM Declassified* (Steam, exe v0.1.0.15143) on post-Kepler NVIDIA GPUs, including the **RTX 50 series**.
+*The Bureau: XCOM Declassified* (Steam, exe v0.1.0.15143) on modern NVIDIA GPUs.
+
+**Supported cards:** in principle every NVIDIA GPU from the **GTX 900 series (Maxwell 2) up** – GTX 900/10, GTX 16,
+RTX 20/30/40/50. **It has only been tested on an RTX 50 series card**; reports from other cards are welcome (open an issue).
+- GTX 600/700 (Kepler) don't need it: the game's own GPU code already runs there.
+- GTX 750/750 Ti/745 (first-generation Maxwell, compute capability 5.0) probably won't work: NVIDIA's PTX modules need 5.2+.
+- AMD and Intel GPUs: no – GPU PhysX requires NVIDIA CUDA.
 
 ## The problem
 With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or particles appear: the effects run on the CPU.
 
 - The game's APEX 1.2.3.0 / PhysX3Gpu modules contain GPU code only for `sm_10`–`sm_30` (Kepler and older) and
-  **no PTX**, so no newer GPU can run it, and `PhysX3Gpu` rejects compute capabilities above 3.x.
-- RTX 50 (Blackwell) drivers expose 32-bit CUDA only to games whose driver profile has the
+  **no PTX**, so no newer GPU (GTX 900 and later) can run it, and `PhysX3Gpu` rejects compute capabilities above 3.x.
+- Additionally, RTX 50 (Blackwell) drivers expose 32-bit CUDA only to games whose driver profile has the
   "PhysX – 32-bit GPU acceleration" switch (setting `0x5067ECC4`); The Bureau is not on NVIDIA's list.
 
 ## What the installer does
@@ -25,7 +31,7 @@ With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or partic
   (`PhysX\Engine\73BE2921551D`, APEX 1.2.3.1). They are paired with the game's modules and verified
   (kernel names, parameter offsets/sizes, constant bank sizes, symbols) – 26/26 match. No NVIDIA file is
   redistributed. The game's own DLLs are not modified (NVIDIA's 1.2.3.1 DLLs are not ABI-compatible with the game).
-- On RTX 50 cards: sets the 32-bit PhysX switch on `thebureau.exe`'s driver profile via NVAPI (UAC prompt).
+- On RTX 50 cards only: sets the 32-bit PhysX switch on `thebureau.exe`'s driver profile via NVAPI (UAC prompt).
 - Particle amount slider (50–200 %), PhysX GPU heap / APEX budget in `XEngine.ini`.
 
 Extras:

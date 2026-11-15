@@ -1,4 +1,4 @@
-// The Bureau: XCOM Declassified – GPU PhysX telepítő (RTX 50 / Kepler utáni NVIDIA GPU-k).
+// The Bureau: XCOM Declassified – GPU PhysX telepítő (GTX 900-tól minden NVIDIA GPU; RTX 50-en tesztelve).
 //
 // Mit csinál (lásd bureau/install.sh és CLAUDE.md "B." szakasz):
 //  1. a beágyazott nvcuda.dll proxyt a TheBureau.exe mellé másolja;
@@ -593,7 +593,7 @@ class SetupForm : Form {
 
     // --- PhysX tab
     var intro = new Label {
-      Text = L.T("GPU-gyorsított PhysX (füst, részecskék) RTX 50-es és más Kepler utáni NVIDIA kártyákon.\n" +
+      Text = L.T("GPU-s PhysX (füst, részecskék) NVIDIA kártyákon a GTX 900-as sorozattól (csak RTX 50-en tesztelve).\n" +
                  "A játék DLL-jeit nem módosítja: egy nvcuda.dll proxyt és az NVIDIA PTX-es GPU-kódját teszi mellé."),
       Location = new Point(10, 8), Size = new Size(564, 52)
     };

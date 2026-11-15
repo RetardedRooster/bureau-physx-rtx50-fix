@@ -1,5 +1,5 @@
 #!/bin/bash
-# The Bureau: XCOM Declassified — GPU PhysX/APEX on post-Kepler NVIDIA GPUs (tested on an RTX 50 series card).
+# The Bureau: XCOM Declassified — GPU PhysX/APEX on NVIDIA GPUs from the GTX 900 series up (tested on an RTX 50 series card only).
 #
 # Why: the game's APEX 1.2.3.0 / PhysX3Gpu DLLs only carry sm_10..sm_30 CUDA code (no PTX), and
 # PhysX3Gpu rejects compute capability > 3.x, so every PhysX effect falls back to the CPU.
