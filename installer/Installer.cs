@@ -6,7 +6,9 @@
 //     (Engine\73BE2921551D) PTX-es párját, ellenőrzi, hogy a kernelek felülete azonos, és cuda_ptx\<hash>.ptx néven
 //     kiírja (a proxy ezt tölti be a régi sm_30-as kód helyett);
 //  3. létrehozza a cuda_fake_cc jelzőt (compute capability 3.0 a játéknak);
-//  4. az XEngine.ini-ben beállítja a részecskeszámot (ParticlePercentage) és a PhysX-memóriát.
+//  4. a PhysXCore.dll-t (PhysX 2.8.4) az ugyanebben a mappában lévő újabb NVIDIA-változatra cseréli (+ cudart32_65.dll),
+//     az eredetit a _orig_physx_core mappába menti;
+//  5. az XEngine.ini-ben beállítja a részecskeszámot (ParticlePercentage) és a PhysX-memóriát.
 // Fordítás: bureau/build.sh (csc, .NET Framework 4, C# 5).
 using System;
 using System.Collections.Generic;
@@ -258,9 +260,60 @@ static class Setup {
     log(L.F("Cseremodulok: {0} / {1}", total, ExpectedModules));
     if (bad > 0 || total != ExpectedModules) throw new Exception(L.F("Nem minden GPU-modul párosítható ({0}/{1}, hibák: {2}).", total, ExpectedModules, bad));
 
+    UpdatePhysXCore(bin, log);
     EnsureDriverProfile(log);
     SetParticles(game, particles, debrisIslands, debrisShapes, log);
     log(L.T("Kész. Indítsd a játékot; a PhysX legyen bekapcsolva a menüben."));
+  }
+
+  // PhysX 2.8.4 core: the game loads the PhysXCore.dll next to TheBureau.exe. NVIDIA's update folder for the APEX
+  // 1.2.3 games (the one the PTX modules come from) has a newer 2.8.4 build with sm_52 PTX; it needs cudart32_65.dll.
+  // The game's own files are kept in _orig_physx_core (once), Uninstall puts them back.
+  public const string CoreBackupDir = "_orig_physx_core";
+  static Version DllVersion(string path) {
+    if (!File.Exists(path)) return null;
+    var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
+    return new Version(v.FileMajorPart, v.FileMinorPart, v.FileBuildPart, v.FilePrivatePart);
+  }
+  public static string PhysXCoreState(string game) {
+    var v = DllVersion(Path.Combine(BinDir(game), "PhysXCore.dll"));
+    return v == null ? null : L.F("PhysXCore.dll: {0}", v);
+  }
+  static bool SameFile(string a, string b) {
+    if (!File.Exists(a) || !File.Exists(b) || new FileInfo(a).Length != new FileInfo(b).Length) return false;
+    return File.ReadAllBytes(a).SequenceEqual(File.ReadAllBytes(b));
+  }
+  public static void UpdatePhysXCore(string bin, Action<string> log) {
+    string src = Path.Combine(UpdateDir, "PhysXCore.dll"), dst = Path.Combine(bin, "PhysXCore.dll");
+    string cudaSrc = Path.Combine(UpdateDir, @"ImplicitLibs\cudart32_65.dll"), cudaDst = Path.Combine(bin, "cudart32_65.dll");
+    var nv = DllVersion(src);
+    var cur = DllVersion(dst);
+    if (nv == null || !File.Exists(cudaSrc)) { log(L.T("PhysXCore.dll: az NVIDIA-frissítésben nincs újabb változat, a játéké marad.")); return; }
+    if (cur == null) { log(L.T("PhysXCore.dll: a játék mappájában nincs ilyen fájl, kimarad.")); return; }
+    if (SameFile(src, dst) && SameFile(cudaSrc, cudaDst)) { log(L.F("PhysXCore.dll: már a frissített {0} van fent.", nv)); return; }
+    if (cur > nv) { log(L.F("PhysXCore.dll: a játék mappájában újabb van ({0}), marad.", cur)); return; }
+    var bak = Path.Combine(bin, CoreBackupDir);
+    if (!Directory.Exists(bak)) {
+      Directory.CreateDirectory(bak);
+      File.Copy(dst, Path.Combine(bak, "PhysXCore.dll"));
+      if (File.Exists(cudaDst)) File.Copy(cudaDst, Path.Combine(bak, "cudart32_65.dll"));
+    }
+    File.Copy(src, dst, true);
+    File.Copy(cudaSrc, cudaDst, true);
+    foreach (var p in new[] { dst, cudaDst }) File.SetAttributes(p, File.GetAttributes(p) & ~FileAttributes.ReadOnly);
+    log(L.F("PhysXCore.dll frissítve: {0} → {1} (+ cudart32_65.dll; az eredeti: {2}).", cur, nv, CoreBackupDir));
+  }
+  public static void RestorePhysXCore(string bin, Action<string> log) {
+    var bak = Path.Combine(bin, CoreBackupDir);
+    if (!Directory.Exists(bak)) return;
+    var core = Path.Combine(bak, "PhysXCore.dll");
+    if (File.Exists(core)) File.Copy(core, Path.Combine(bin, "PhysXCore.dll"), true);
+    var cuda = Path.Combine(bak, "cudart32_65.dll");
+    var cudaDst = Path.Combine(bin, "cudart32_65.dll");
+    if (File.Exists(cuda)) File.Copy(cuda, cudaDst, true);
+    else if (File.Exists(cudaDst)) File.Delete(cudaDst);
+    Directory.Delete(bak, true);
+    log(L.T("PhysXCore.dll: a játék eredeti példánya visszaállítva."));
   }
 
   // RTX 50 cards expose 32-bit CUDA only to games whose driver profile has the "32-bit GPU PhysX" switch
@@ -406,6 +459,7 @@ static class Setup {
   // APEX destruction debris: the game ships 2500 chunk islands / 0 (= unlimited) shapes. The debris is simulated on the
   // CPU, so big fights with lots of it on the ground are CPU-bound; lower limits reduce the frame drops.
   public const int DebrisIslandsOrig = 2500, DebrisShapesOrig = 0;
+  public const int DebrisIslandsRec = 1500, DebrisShapesRec = 1500;   // shown by default while the ini has the game's values
 
   public static void ReadDebris(string game, out int islands, out int shapes) {
     islands = DebrisIslandsOrig; shapes = DebrisShapesOrig;
@@ -452,6 +506,7 @@ static class Setup {
       if (Directory.Exists(p)) Directory.Delete(p, true);
     }
     foreach (var f in Directory.GetFiles(bin, "bureau_cuda*.log")) File.Delete(f);
+    RestorePhysXCore(bin, log);
     log(L.T("Proxy és cseremodulok eltávolítva. (A driverprofil 32 bites PhysX-kapcsolója maradt, az nem árt.)"));
     var ini = IniPath(game);
     var bak = ini + ".bak_physx_setup";
@@ -715,6 +770,7 @@ class SetupForm : Form {
   void LoadDebris() {
     int i = Setup.DebrisIslandsOrig, sh = Setup.DebrisShapesOrig;
     if (Game != null) Setup.ReadDebris(Game, out i, out sh);
+    if (i == Setup.DebrisIslandsOrig && sh == Setup.DebrisShapesOrig) { i = Setup.DebrisIslandsRec; sh = Setup.DebrisShapesRec; }
     debrisIslands.Value = Math.Max(debrisIslands.Minimum, Math.Min(debrisIslands.Maximum, i));
     debrisShapes.Value = Math.Max(debrisShapes.Minimum, Math.Min(debrisShapes.Maximum, sh));
   }
@@ -799,6 +855,8 @@ class SetupForm : Form {
       status.Text = Setup.IsInstalled(g) ? L.T("GPU PhysX telepítve.") : L.T("GPU PhysX nincs telepítve.");
       var dp = Setup.DriverProfileState();
       if (dp != null) status.Text += "   " + dp;
+      var core = Setup.PhysXCoreState(g);
+      if (core != null) status.Text += "   " + core;
       status.ForeColor = Color.DarkGreen;
     }
     install.Enabled = g != null && upd;

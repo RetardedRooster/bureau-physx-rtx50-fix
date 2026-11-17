@@ -219,5 +219,12 @@ static class L {
     { "Leállítva.", "Stopped." },
     { "Hiba történt (részletek fent).", "An error occurred (details above)." },
     { "Minden átvezető kész.", "All cutscenes done." },
+    { "PhysXCore.dll: {0}", "PhysXCore.dll: {0}" },
+    { "PhysXCore.dll: az NVIDIA-frissítésben nincs újabb változat, a játéké marad.", "PhysXCore.dll: no newer version in the NVIDIA update, the game's copy stays." },
+    { "PhysXCore.dll: a játék mappájában nincs ilyen fájl, kimarad.", "PhysXCore.dll: not found in the game folder, skipped." },
+    { "PhysXCore.dll: már a frissített {0} van fent.", "PhysXCore.dll: the updated {0} is already installed." },
+    { "PhysXCore.dll: a játék mappájában újabb van ({0}), marad.", "PhysXCore.dll: the game folder has a newer one ({0}), kept." },
+    { "PhysXCore.dll frissítve: {0} → {1} (+ cudart32_65.dll; az eredeti: {2}).", "PhysXCore.dll updated: {0} → {1} (+ cudart32_65.dll; original kept in {2})." },
+    { "PhysXCore.dll: a játék eredeti példánya visszaállítva.", "PhysXCore.dll: the game's original copy restored." },
   };
 }

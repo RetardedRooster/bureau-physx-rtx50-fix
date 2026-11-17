@@ -31,6 +31,9 @@ With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or partic
   (`PhysX\Engine\73BE2921551D`, APEX 1.2.3.1). They are paired with the game's modules and verified
   (kernel names, parameter offsets/sizes, constant bank sizes, symbols) – 26/26 match. No NVIDIA file is
   redistributed. The game's own DLLs are not modified (NVIDIA's 1.2.3.1 DLLs are not ABI-compatible with the game).
+- Updates the game's **`PhysXCore.dll`** (PhysX 2.8.4) to NVIDIA's newer build from the same update folder
+  (2.8.4.11, with its `cudart32_65.dll`). The game's copy is kept in `Binaries\Win32\_orig_physx_core` and put back
+  by **Uninstall**; a newer `PhysXCore.dll` already in the game folder is left alone.
 - On RTX 50 cards only: sets the 32-bit PhysX switch on `thebureau.exe`'s driver profile via NVAPI (UAC prompt).
 - Particle amount slider (50–200 %), debris limits, PhysX GPU heap / APEX budget in `XEngine.ini`.
 
@@ -42,9 +45,9 @@ Extras:
 - **FPS limit** via the driver profile's frame rate limiter (the in-game option overrides the ini otherwise).
 - **Graphics tab (experimental)** – DX11, anisotropy, FXAA, shadows, … No guarantee these change anything.
 - **Debris limit** (PhysX tab: chunk islands and pieces) – caps the APEX destruction debris simulated at once (the game
-  ships 2500 / unlimited).
+  ships 2500 / unlimited; the installer defaults to 1500 / 1500).
   Large fights with lots of debris on the ground are CPU-bound (the 32-bit engine's main threads hit 100 % while the GPU
-  idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops. 1500 / 1500 is a good start.
+  idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops.
 - **AI-upscaled cutscenes tab (optional)** – the game's 47 cutscenes in 2560×1472 instead of 1280×736:
   - *Install a video pack*: select any part of a `TheBureau_AI_Upscaled_Cutscenes.partN.zip` pack (the other parts must be in
     the same folder); every video is SHA-256 checked against the pack's manifest. **No video pack is provided in this
