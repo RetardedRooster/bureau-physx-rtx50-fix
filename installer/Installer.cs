@@ -20,6 +20,8 @@ using System.Windows.Forms;
 
 static class Program {
   public static bool Restart;   // set by the language selector: rebuild the window in the new language
+  public static int StartTab;   // "--tab n": open on that tab (testing)
+  public static string StartGame;   // "--game <dir>": use this game folder (testing)
 
   [STAThread]
   static int Main(string[] args) {
@@ -41,6 +43,10 @@ static class Program {
         try { File.WriteAllText(args[1], ex.Message); } catch { }
         return 1;
       }
+    }
+    for (int i = 0; i + 1 < args.Length; i++) {
+      if (args[i] == "--tab") int.TryParse(args[i + 1], out StartTab);
+      if (args[i] == "--game") StartGame = args[i + 1];
     }
     Application.EnableVisualStyles();
     Application.SetCompatibleTextRenderingDefault(false);
@@ -548,6 +554,7 @@ class SetupForm : Form {
   Label uwMonitor = new Label(), uwState = new Label();
   CheckBox uwCheck = new CheckBox();
   Button uwApply = new Button();
+  CutscenesTab cutscenes;
 
   void LoadUltrawide() {
     var g = Game;
@@ -590,7 +597,9 @@ class SetupForm : Form {
     var tabPhysx = new TabPage("PhysX");
     var tabGfx = new TabPage(L.T("Grafika"));
     var tabUw = new TabPage("21:9");
-    tabs.TabPages.Add(tabPhysx); tabs.TabPages.Add(tabGfx); tabs.TabPages.Add(tabUw);
+    var tabVid = new TabPage(L.T("AI-felskálázott átvezetők"));
+    tabs.TabPages.Add(tabPhysx); tabs.TabPages.Add(tabGfx); tabs.TabPages.Add(tabUw); tabs.TabPages.Add(tabVid);
+    if (Program.StartTab > 0 && Program.StartTab < tabs.TabPages.Count) tabs.SelectedIndex = Program.StartTab;
 
     // --- 21:9 tab
     var scrB = Setup.PhysicalScreen();
@@ -693,7 +702,9 @@ class SetupForm : Form {
     gfxMax.Click += (s, e) => { foreach (var kv in gfxControls) SetControl(kv.Key, kv.Key.Max); };
     gfxSave.Click += (s, e) => Run(SaveGfx);
 
-    pathBox.Text = Setup.FindGame() ?? "";
+    pathBox.Text = Program.StartGame ?? Setup.FindGame() ?? "";
+    cutscenes = new CutscenesTab(tabVid, this, () => Game, Log);
+    FormClosing += (s, e) => { if (!cutscenes.ConfirmClose()) e.Cancel = true; };
     Refresh_();
     if (Game != null) slider.Value = Math.Max(50, Math.Min(200, Setup.ReadParticles(Game)));
     LoadDebris();
@@ -780,6 +791,7 @@ class SetupForm : Form {
 
   void Refresh_() {
     var g = Game;
+    if (cutscenes != null) cutscenes.Refresh();
     bool upd = Directory.Exists(Setup.UpdateDir);
     if (g == null) { status.Text = L.T("A játék nem található. Add meg a mappát."); status.ForeColor = Color.DarkRed; }
     else if (!upd) { status.Text = L.F("Hiányzik az NVIDIA PhysX-frissítés ({0}).", Setup.UpdateDir); status.ForeColor = Color.DarkRed; }

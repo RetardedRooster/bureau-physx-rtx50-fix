@@ -45,6 +45,19 @@ Extras:
   ships 2500 / unlimited).
   Large fights with lots of debris on the ground are CPU-bound (the 32-bit engine's main threads hit 100 % while the GPU
   idles), and the debris is simulated on the CPU – fewer pieces = fewer frame drops. 1500 / 1500 is a good start.
+- **AI-upscaled cutscenes tab (optional)** – the game's 47 cutscenes in 2560×1472 instead of 1280×736:
+  - *Install a video pack*: select any part of a `TheBureau_AI_Upscaled_Cutscenes.partN.zip` pack (the other parts must be in
+    the same folder); every video is SHA-256 checked against the pack's manifest. **No video pack is provided in this
+    repository** – the videos are the game's copyrighted content.
+  - *Local upscale*: makes the same videos on your own PC from your own copy of the game: frames decoded with the game's
+    own `bink2w32.dll` → Real-ESRGAN x4plus on the GPU (Vulkan) → Lanczos to 2560×1472, with depth-of-field protection
+    (areas that are blurred on purpose keep the original's look instead of AI-invented detail; per-video recipes) → Bink 1
+    with all audio tracks. About 36,000 frames: roughly 16 hours on a fast modern GPU, 1–2 days on a mid-range one; needs
+    ~40 GB free space. Progress bar with a time-left estimate; can be stopped and resumed.
+    Real-ESRGAN (BSD-3, [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)) is downloaded by the installer
+    (SHA-256 checked); RAD Video Tools (free, Bink encoder) must be downloaded from
+    [RAD Game Tools](https://www.radgametools.com/bnkdown.htm) and installed by you.
+  - The original videos are backed up (`XGame\Movies\_original_cutscenes`) and can be restored with one click.
 - English / Hungarian UI.
 
 ## Usage

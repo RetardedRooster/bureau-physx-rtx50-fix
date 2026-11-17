@@ -66,10 +66,18 @@ CSC=/c/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe
 # icon: drawn by installer/IconGen.cs (original artwork), multi-size .ico
 "$CSC" -nologo -r:System.Drawing.dll -out:"$(W "$B/icongen.exe")" "$(W "$HERE/installer/IconGen.cs")"
 "$B/icongen.exe" "$(W "$B/app.ico")"
+# AI-upscaled cutscenes: video tool (64-bit) + Bink helper (32-bit: the game's bink2w32.dll), embedded in the installer
+FW=C:/Windows/Microsoft.NET/Framework64/v4.0.30319
+for t in "anycpu BureauVideoTool" "x86 BureauBink32"; do
+  set -- $t
+  "$CSC" -nologo -codepage:65001 -optimize+ -platform:$1 -r:System.Drawing.dll -r:System.Core.dll -r:$FW/System.IO.Compression.dll \
+    -r:$FW/System.IO.Compression.FileSystem.dll -out:"$(W "$B/$2.exe")" "$(W "$HERE/video/BureauVideo.cs")" "$(W "$HERE/video/Recipes.cs")"
+done
 "$CSC" -nologo -codepage:65001 -target:winexe -platform:anycpu -optimize+ -win32icon:"$(W "$B/app.ico")" \
-  -resource:"$(W "$B/nvcuda.dll")",nvcuda.dll -r:System.Windows.Forms.dll -r:System.Drawing.dll \
-  -r:System.Management.dll -out:"$(W "$B/BureauPhysXSetup.exe")" "$(W "$HERE/installer/Installer.cs")" "$(W "$HERE/installer/Nvdrs.cs")" \
-  "$(W "$HERE/installer/Ultrawide.cs")" "$(W "$HERE/installer/Lang.cs")"
+  -resource:"$(W "$B/nvcuda.dll")",nvcuda.dll -resource:"$(W "$B/BureauVideoTool.exe")",BureauVideoTool.exe \
+  -resource:"$(W "$B/BureauBink32.exe")",BureauBink32.exe -r:System.Windows.Forms.dll -r:System.Drawing.dll \
+  -r:System.Management.dll -r:System.Core.dll -out:"$(W "$B/BureauPhysXSetup.exe")" "$(W "$HERE/installer/Installer.cs")" "$(W "$HERE/installer/Nvdrs.cs")" \
+  "$(W "$HERE/installer/Ultrawide.cs")" "$(W "$HERE/installer/Lang.cs")" "$(W "$HERE/installer/Cutscenes.cs")" "$(W "$HERE/video/Recipes.cs")"
 echo "built $B/BureauPhysXSetup.exe"
 
 if [ "$1" = "install" ]; then
