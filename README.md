@@ -31,8 +31,8 @@ With PhysX enabled, the frame rate drops to 20–25 fps whenever smoke or partic
   (`PhysX\Engine\73BE2921551D`, APEX 1.2.3.1). They are paired with the game's modules and verified
   (kernel names, parameter offsets/sizes, constant bank sizes, symbols) – 26/26 match. No NVIDIA file is
   redistributed. The game's own DLLs are not modified (NVIDIA's 1.2.3.1 DLLs are not ABI-compatible with the game).
-- Updates the game's **`PhysXCore.dll`** (PhysX 2.8.4) to NVIDIA's newer build from the same update folder
-  (2.8.4.11, with its `cudart32_65.dll`). The game's copy is kept in `Binaries\Win32\_orig_physx_core` and put back
+- Updates the game's **`PhysXCore.dll`** (PhysX 2.8.4) to NVIDIA's 2.8.4.10 build with code for modern GPUs
+  (sm_52 PTX; `PhysX\Engine\6FE164B5308A`, plus `cudart32_65.dll`). The game's copy is kept in `Binaries\Win32\_orig_physx_core` and put back
   by **Uninstall**; a newer `PhysXCore.dll` already in the game folder is left alone.
 - On RTX 50 cards only: sets the 32-bit PhysX switch on `thebureau.exe`'s driver profile via NVAPI (UAC prompt).
 - Particle amount slider (50–200 %), debris limits, PhysX GPU heap / APEX budget in `XEngine.ini`.

@@ -6,7 +6,7 @@
 //     (Engine\73BE2921551D) PTX-es párját, ellenőrzi, hogy a kernelek felülete azonos, és cuda_ptx\<hash>.ptx néven
 //     kiírja (a proxy ezt tölti be a régi sm_30-as kód helyett);
 //  3. létrehozza a cuda_fake_cc jelzőt (compute capability 3.0 a játéknak);
-//  4. a PhysXCore.dll-t (PhysX 2.8.4) az ugyanebben a mappában lévő újabb NVIDIA-változatra cseréli (+ cudart32_65.dll),
+//  4. a PhysXCore.dll-t (PhysX 2.8.4) az NVIDIA 2.8.4.10-es, PTX-es változatára cseréli (Engine\6FE164B5308A, + cudart32_65.dll),
 //     az eredetit a _orig_physx_core mappába menti;
 //  5. az XEngine.ini-ben beállítja a részecskeszámot (ParticlePercentage) és a PhysX-memóriát.
 // Fordítás: bureau/build.sh (csc, .NET Framework 4, C# 5).
@@ -266,10 +266,17 @@ static class Setup {
     log(L.T("Kész. Indítsd a játékot; a PhysX legyen bekapcsolva a menüben."));
   }
 
-  // PhysX 2.8.4 core: the game loads the PhysXCore.dll next to TheBureau.exe. NVIDIA's update folder for the APEX
-  // 1.2.3 games (the one the PTX modules come from) has a newer 2.8.4 build with sm_52 PTX; it needs cudart32_65.dll.
+  // PhysX 2.8.4 core: the game loads the PhysXCore.dll next to TheBureau.exe. NVIDIA's PhysX System Software has a
+  // 2.8.4.10 build with sm_52 PTX (Engine\6FE164B5308A); it needs cudart32_65.dll. (v1.1.1 used the 2.8.4.11 build
+  // of the APEX 1.2.3.1 folder – replaced again, the user preferred 2.8.4.10.)
   // The game's own files are kept in _orig_physx_core (once), Uninstall puts them back.
   public const string CoreBackupDir = "_orig_physx_core";
+  const string EngineDir = @"C:\Program Files (x86)\NVIDIA Corporation\PhysX\Engine";
+  static readonly string CoreSrc = Path.Combine(EngineDir, @"6FE164B5308A\PhysXCore.dll");
+  static readonly string CoreV111 = Path.Combine(UpdateDir, "PhysXCore.dll");   // what v1.1.1 installed
+  static readonly string[] CudartSrcs = {
+    @"C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common\cudart32_65.dll",
+    Path.Combine(UpdateDir, @"ImplicitLibs\cudart32_65.dll") };
   static Version DllVersion(string path) {
     if (!File.Exists(path)) return null;
     var v = System.Diagnostics.FileVersionInfo.GetVersionInfo(path);
@@ -284,14 +291,14 @@ static class Setup {
     return File.ReadAllBytes(a).SequenceEqual(File.ReadAllBytes(b));
   }
   public static void UpdatePhysXCore(string bin, Action<string> log) {
-    string src = Path.Combine(UpdateDir, "PhysXCore.dll"), dst = Path.Combine(bin, "PhysXCore.dll");
-    string cudaSrc = Path.Combine(UpdateDir, @"ImplicitLibs\cudart32_65.dll"), cudaDst = Path.Combine(bin, "cudart32_65.dll");
+    string src = CoreSrc, dst = Path.Combine(bin, "PhysXCore.dll");
+    string cudaSrc = CudartSrcs.FirstOrDefault(File.Exists), cudaDst = Path.Combine(bin, "cudart32_65.dll");
     var nv = DllVersion(src);
     var cur = DllVersion(dst);
-    if (nv == null || !File.Exists(cudaSrc)) { log(L.T("PhysXCore.dll: az NVIDIA-frissítésben nincs újabb változat, a játéké marad.")); return; }
+    if (nv == null || cudaSrc == null) { log(L.T("PhysXCore.dll: az NVIDIA-frissítésben nincs újabb változat, a játéké marad.")); return; }
     if (cur == null) { log(L.T("PhysXCore.dll: a játék mappájában nincs ilyen fájl, kimarad.")); return; }
     if (SameFile(src, dst) && SameFile(cudaSrc, cudaDst)) { log(L.F("PhysXCore.dll: már a frissített {0} van fent.", nv)); return; }
-    if (cur > nv) { log(L.F("PhysXCore.dll: a játék mappájában újabb van ({0}), marad.", cur)); return; }
+    if (cur > nv && !SameFile(CoreV111, dst)) { log(L.F("PhysXCore.dll: a játék mappájában újabb van ({0}), marad.", cur)); return; }
     var bak = Path.Combine(bin, CoreBackupDir);
     if (!Directory.Exists(bak)) {
       Directory.CreateDirectory(bak);
